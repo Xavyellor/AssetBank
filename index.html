@@ -164,21 +164,19 @@
     const API_URL_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
     const apiKey = ""; // Canvas environment will provide the key at runtime
 
-    // --- LOCAL HOST FIX: You must edit this section if running outside the Canvas environment. ---
-    
     // Check if the application is running in the Canvas environment
     const isCanvasEnvironment = typeof __firebase_config !== 'undefined';
 
+    // --- LOCAL HOST CONFIGURATION (NOW WITH YOUR VALUES) ---
     // If running locally, this object must contain your project's configuration.
-    // **CRITICAL:** Ensure all placeholders are replaced with valid values from your Firebase Console.
     const localFirebaseConfig = {
-        apiKey: "AIzaSyA6ts71B2O9GldljmKh6gEuWC5At77xUPc", // <--- THIS MUST BE A VALID KEY
+        apiKey: "AIzaSyA6ts71B2O9GldljmKh6gEuWC5At77xUPc",
         authDomain: "asset-bank-4a077.firebaseapp.com",
         projectId: "asset-bank-4a077",
         storageBucket: "asset-bank-4a077.firebasestorage.app",
         messagingSenderId: "159441579233",
-        appId: "1:159441579233:web:0edfcdd18f2b960ae89ba0" 
-        measurementId: "G-JGK360Y3J1"
+        appId: "1:159441579233:web:0edfcdd18f2b960ae89ba0",
+        // Note: measurementId is not strictly needed for basic Firestore/Auth functions
     };
 
     const appId = isCanvasEnvironment ? __app_id : 'default-asset-bank-app';
@@ -253,17 +251,8 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
         try {
-            // CRITICAL CHECK: Look for *any* placeholder string in the local config values
-            const hasPlaceholder = Object.values(localFirebaseConfig).some(value => 
-                typeof value === 'string' && value.includes("YOUR_")
-            );
-
-            if (!isCanvasEnvironment && hasPlaceholder) {
-                 showMessageModal("Configuration Error", "You must replace ALL placeholder values in the `localFirebaseConfig` object in the script with your own Firebase project details (API key, project ID, etc.) to initialize Firebase locally.");
-                 console.error("CRITICAL: Firebase initialization aborted. Please update localFirebaseConfig.");
-                 return;
-            }
-
+            // NOTE: The previous placeholder check has been removed since user provided config.
+            
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
@@ -293,12 +282,13 @@
                         if (initialAuthToken) {
                             await signInWithCustomToken(auth, initialAuthToken);
                         } else {
+                            // This is the path for local host testing with your Firebase config
                             await signInAnonymously(auth);
                         }
                     } catch (error) {
                         console.error("Firebase Auth Error:", error);
                         // Show specific, actionable error for the user
-                        const msg = `Authentication failed. This is usually due to an invalid Firebase API Key or Anonymous Sign-in not being enabled in your Firebase console. Details: ${error.message}`;
+                        const msg = `Authentication failed. Please ensure **Anonymous Sign-in** is enabled in your Firebase console under Authentication > Sign-in method. Details: ${error.message}`;
                         showMessageModal("Authentication Failed", msg);
                         showStatus("Authentication failed. Check console for details.", true);
                     }
