@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Builder Art Asset Bank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f0f8ff; /* Lighter blue background to match the branding feel */
+        }
+        .header-bg {
+            background-color: #e6f2ff; /* Very light blue for the header background */
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #cce0ff;
+        }
+        .card { 
+            transition: all 0.3s ease; 
+            border: 1px solid #e0e6f0;
+        }
+        .card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+        }
+        .tag { 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+            background-color: #e0f2fe; /* Light blue tag background */
+            color: #007bff; /* Darker blue tag text */
+        }
+        .tag:hover { 
+            background-color: #a7d9ff; /* Hover effect for tags */
+        }
+        .button-primary {
+            background-color: #007bff; /* Class Builder blue */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .button-primary:hover:not(:disabled) {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+        .button-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .input-style {
+            padding: 0.75rem;
+            border: 1px solid #cce0ff; /* Lighter blue border */
+            border-radius: 0.5rem;
+            width: 100%;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-style:focus {
+            border-color: #007bff; /* Focus ring color */
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body>
+
+<div id="app" class="min-h-screen">
+    <header class="header-bg text-center mb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Logo and Primary Title -->
+            <div class="flex items-center justify-center space-x-3 mb-4">
+                <!-- SVG Placeholder simulating the logo icon (Green/Blue Blocks) -->
+                <svg width="40" height="40" viewBox="0 0 100 100" class="flex-shrink-0">
+                    <rect x="0" y="25" width="45" height="45" rx="8" fill="#10b981"/> <!-- Green/Teal block -->
+                    <rect x="40" y="10" width="50" height="50" rx="8" fill="#007bff" opacity="0.9"/> <!-- Blue block -->
+                </svg>
+                
+                <h1 class="text-5xl font-extrabold text-[#007bff] leading-none">Class Builder</h1>
+            </div>
+
+            <!-- Secondary Title/Descriptor -->
+            <p class="text-4xl font-extrabold text-gray-800 mb-2">Art Asset Bank</p>
+            <p class="text-xl text-gray-700">Smartly store and search flat vector art using AI tagging.</p>
+        </div>
+    </header>
+
+    <!-- UI: Loading and Messages --><div id="status-message" class="fixed top-0 left-0 right-0 p-3 text-center text-sm font-medium z-50 transition-transform duration-300 transform -translate-y-full" style="background-color: #28a745; color: white;"></div>
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-40 hidden">
+        <div class="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-xl">
+            <svg class="animate-spin h-5 w-5 text-[#007bff]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-gray-700">Analyzing and Tagging Asset...</span>
+        </div>
+    </div>
+    
+    <!-- User Info (Hidden until auth is ready) --><div id="user-info" class="text-sm text-gray-500 text-center mb-4 mt-4 hidden">
+        <span class="font-semibold">User ID:</span> <span id="user-id-display"></span>
+    </div>
+
+    <!-- Main Content Area --><div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <!-- UI: Search and Upload Area --><div class="mb-10 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+            <!-- Search Bar --><div class="flex flex-col sm:flex-row items-stretch sm:space-x-4 mb-6">
+                <input type="text" id="search-input" placeholder="Search by name, theme, or tags..." 
+                       class="input-style flex-grow mb-4 sm:mb-0" 
+                       oninput="handleSearch()">
+                <button onclick="handleSearch()" class="button-primary">
+                    Search
+                </button>
+            </div>
+
+            <!-- Upload Form --><div class="border-t border-gray-200 pt-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload New Vector Art (SVG or PNG)</h2>
+                <input type="file" id="file-input" accept="image/svg+xml, image/png" class="block w-full text-sm text-gray-600 
+                    file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 
+                    file:text-sm file:font-semibold file:bg-[#e6f2ff] file:text-[#007bff] 
+                    hover:file:bg-[#cce0ff] cursor-pointer">
+                <button onclick="uploadAsset()" id="upload-button" disabled 
+                        class="mt-4 w-full button-primary disabled:opacity-60 disabled:cursor-not-allowed">
+                    Upload & Auto-Tag Asset
+                </button>
+            </div>
+        </div>
+
+        <!-- UI: Asset Display Grid --><div id="asset-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Assets will be injected here --></div>
+
+        <!-- UI: No Results Message --><p id="no-results" class="text-center text-gray-500 text-lg mt-10 hidden">No assets found matching your search criteria.</p>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal --><div id="confirmation-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
+        <h3 class="text-xl font-bold text-gray-800 mb-3">Confirm Deletion</h3>
+        <p class="text-gray-600 mb-4">Are you sure you want to permanently delete this asset?</p>
+        <div class="flex justify-end space-x-3">
+            <button id="confirm-cancel" class="bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold hover:bg-gray-400 transition duration-200">Cancel</button>
+            <button id="confirm-delete" class="bg-red-600 text-white p-3 rounded-lg font-semibold hover:bg-red-700 transition duration-200">Delete</button>
+        </div>
+    </div>
+</div>
+<!-- Custom Info/Error Modal --><div id="simple-message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
+        <h3 id="modal-title" class="text-xl font-bold text-gray-800 mb-3"></h3>
+        <p id="modal-message" class="text-gray-600 mb-4"></p>
+        <button id="modal-close" class="w-full button-primary">Close</button>
+    </div>
+</div>
+
+<!-- Firebase and App Logic --><script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, collection, query, onSnapshot, addDoc, getDocs, where, setDoc, deleteDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- Global Configuration ---
+    const API_URL_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+    const apiKey = ""; // Canvas environment will provide the key at runtime
+
+    // --- LOCAL HOST FIX: You must edit this section if running outside the Canvas environment. ---
+    
+    // Check if the application is running in the Canvas environment
+    const isCanvasEnvironment = typeof __firebase_config !== 'undefined';
+
+    // If running locally, this object must contain your project's configuration.
+    // **CRITICAL:** Ensure all placeholders are replaced with valid values from your Firebase Console.
+    const localFirebaseConfig = {
+        apiKey: "YOUR_FIREBASE_API_KEY", // <--- THIS MUST BE A VALID KEY
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "123456789012",
+        appId: "1:123456789012:web:abcdef1234567890" 
+    };
+
+    const appId = isCanvasEnvironment ? __app_id : 'default-asset-bank-app';
+    const firebaseConfig = isCanvasEnvironment ? JSON.parse(__firebase_config) : localFirebaseConfig;
+    const initialAuthToken = isCanvasEnvironment ? __initial_auth_token : null;
+    
+    // Set Firestore log level for debugging
+    // setLogLevel('Debug'); // Uncomment this line to see detailed Firestore logs
+
+    let app, db, auth, userId = null;
+    let allAssets = []; // Cache all fetched assets
+    let isAuthReady = false;
+
+    let assetIdToDelete = null; // Used by confirmation modal
+
+    // --- Utility Functions ---
+
+    // Utility function for exponential backoff on fetch
+    async function fetchWithRetry(url, options, maxRetries = 5) {
+        let lastError;
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response;
+            } catch (error) {
+                lastError = error;
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                console.warn(`Fetch failed (attempt ${i + 1}/${maxRetries}). Retrying in ${Math.round(delay / 1000)}s...`, error);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+        throw new Error(`Failed to fetch after ${maxRetries} attempts. Last error: ${lastError.message}`);
+    }
+
+    // Displays a temporary status message banner
+    function showStatus(message, isError = false) {
+        const statusElement = document.getElementById('status-message');
+        statusElement.textContent = message;
+        statusElement.style.backgroundColor = isError ? '#dc3545' : '#28a745'; // Bootstrap success/danger colors
+        statusElement.style.transform = 'translateY(0)';
+        setTimeout(() => {
+            statusElement.style.transform = 'translateY(-100%)';
+        }, 3000);
+    }
+
+    // Handles modal/dialog-style message display instead of alert()
+    function showMessageModal(title, message) {
+        const modal = document.getElementById('simple-message-modal');
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').textContent = message;
+        modal.classList.remove('hidden');
+    }
+
+    // Function to set up the confirmation modal logic
+    function setupConfirmationModal() {
+        const modal = document.getElementById('confirmation-modal');
+        const cancelButton = document.getElementById('confirm-cancel');
+        const deleteButton = document.getElementById('confirm-delete');
+
+        cancelButton.onclick = () => modal.classList.add('hidden');
+        deleteButton.onclick = () => {
+            modal.classList.add('hidden');
+            // Execute deletion after user confirmation
+            performDelete(assetIdToDelete);
+        };
+    }
+
+    // --- Firebase Initialization and Auth ---
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            // CRITICAL CHECK: Look for *any* placeholder string in the local config values
+            const hasPlaceholder = Object.values(localFirebaseConfig).some(value => 
+                typeof value === 'string' && value.includes("YOUR_")
+            );
+
+            if (!isCanvasEnvironment && hasPlaceholder) {
+                 showMessageModal("Configuration Error", "You must replace ALL placeholder values in the `localFirebaseConfig` object in the script with your own Firebase project details (API key, project ID, etc.) to initialize Firebase locally.");
+                 console.error("CRITICAL: Firebase initialization aborted. Please update localFirebaseConfig.");
+                 return;
+            }
+
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Setup custom modal listeners
+            document.getElementById('modal-close').onclick = () => document.getElementById('simple-message-modal').classList.add('hidden');
+            setupConfirmationModal();
+
+            document.getElementById('file-input').addEventListener('change', (e) => {
+                document.getElementById('upload-button').disabled = e.target.files.length === 0;
+            });
+
+            // Set up authentication listener
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    isAuthReady = true;
+                    document.getElementById('user-id-display').textContent = userId;
+                    document.getElementById('user-info').classList.remove('hidden');
+                    console.log('User signed in. User ID:', userId);
+
+                    // Now that we have the userId, start fetching data
+                    fetchAssetsRealtime();
+                } else {
+                    // Sign in anonymously if no token, or with custom token
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        // Show specific, actionable error for the user
+                        const msg = `Authentication failed. This is usually due to an invalid Firebase API Key or Anonymous Sign-in not being enabled in your Firebase console. Details: ${error.message}`;
+                        showMessageModal("Authentication Failed", msg);
+                        showStatus("Authentication failed. Check console for details.", true);
+                    }
+                }
+            });
+
+        } catch (e) {
+            console.error("Error initializing Firebase:", e);
+            showMessageModal("Initialization Failed", "Could not initialize Firebase. Ensure your configuration is correct.");
+            showStatus("Failed to initialize the application. Check console.", true);
+        }
+    });
+
+    // --- Firestore Operations ---
+
+    // Get the collection reference (private data for the current user)
+    function getAssetsCollectionRef() {
+        if (!db || !userId) {
+            console.error("Database or User ID not ready.");
+            return null;
+        }
+        // Path: /artifacts/{appId}/users/{userId}/vector_assets
+        return collection(db, 'artifacts', appId, 'users', userId, 'vector_assets');
+    }
+
+    // Real-time listener for assets
+    function fetchAssetsRealtime() {
+        const colRef = getAssetsCollectionRef();
+        if (!colRef) return;
+
+        // Query to listen for all documents in the user's asset collection
+        const q = query(colRef);
+
+        // Set up the real-time listener
+        onSnapshot(q, (snapshot) => {
+            allAssets = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                allAssets.push({ id: doc.id, ...data });
+            });
+            console.log(`Fetched ${allAssets.length} assets.`);
+            // Display all assets immediately after fetching
+            renderAssets(allAssets);
+        }, (error) => {
+            console.error("Error fetching real-time assets:", error);
+            showStatus("Could not load assets in real-time.", true);
+        });
+    }
+
+    // --- Gemini API for Tagging ---
+
+    // MIMETYPE ADDED AS AN ARGUMENT
+    async function analyzeImage(base64Image, mimeType) {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+
+        // This prompt requests the model to act as an image analysis expert for vector art (Generic Prompt)
+        const systemPrompt = "You are an AI specialized in analyzing flat vector art. Your task is to identify the main object, the overall theme, and generate a list of 5-10 relevant and descriptive tags for the image. The output MUST be a JSON object conforming to the provided schema.";
+        
+        // This is the specific instruction for this query
+        const userQuery = "Analyze the provided flat vector image and return its objectName, theme, and an array of descriptive tags for searching.";
+
+        // Construct the full payload
+        const payload = {
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        { text: userQuery },
+                        {
+                            inlineData: {
+                                // USE DYNAMIC MIMETYPE
+                                mimeType: mimeType, 
+                                // Remove the mime type prefix to get the raw base64 data for the API
+                                data: base64Image.split(',')[1] 
+                            }
+                        }
+                    ]
+                }
+            ],
+            // Requesting structured JSON output
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        "objectName": { "type": "STRING", "description": "The primary object or concept in the image (e.g., 'A modern desk lamp')" },
+                        "theme": { "type": "STRING", "description": "The category or theme the image belongs to (e.g., 'Technology', 'Nature', 'Business')" },
+                        "tags": {
+                            "type": "ARRAY",
+                            "description": "A list of 5 to 10 relevant keywords for searching.",
+                            "items": { "type": "STRING" }
+                        }
+                    },
+                    "propertyOrdering": ["objectName", "theme", "tags"]
+                }
+            },
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+        };
+        
+        const url = `${API_URL_BASE}?key=${apiKey}`;
+
+        try {
+            const response = await fetchWithRetry(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            
+            // Check for valid response structure
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                
+                const jsonText = result.candidates[0].content.parts[0].text;
+                const metadata = JSON.parse(jsonText);
+                return metadata;
+
+            } else if (result.error) {
+                 throw new Error(`Gemini API Error: ${result.error.message}`);
+            } else {
+                 throw new Error("Gemini API returned an unexpected response structure.");
+            }
+        } catch (error) {
+            console.error("Gemini API call failed:", error);
+            document.getElementById('loading-overlay').classList.add('hidden');
+            throw new Error(`Failed to analyze image: ${error.message}`);
+        }
+    }
+
+    // --- Main Asset Logic ---
+
+    window.uploadAsset = async function() {
+        const fileInput = document.getElementById('file-input');
+        const file = fileInput.files[0];
+        const uploadBtn = document.getElementById('upload-button');
+
+        // NEW: Check for file existence and supported type
+        const supportedTypes = ['image/svg+xml', 'image/png'];
+        if (!file || !supportedTypes.includes(file.type)) {
+            showMessageModal("Error", "Please select an SVG or PNG file to upload.");
+            return;
+        }
+
+        uploadBtn.disabled = true;
+        document.getElementById('loading-overlay').classList.remove('hidden');
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64Image = e.target.result;
+            const mimeType = file.type; // Capture the determined mime type for the API call
+
+            try {
+                // 1. Analyze Image with Gemini
+                const metadata = await analyzeImage(base64Image, mimeType);
+                
+                // 2. Save Data to Firestore
+                const newAsset = {
+                    base64Image: base64Image, // Store the image data (full Data URI)
+                    objectName: metadata.objectName || 'Untitled Object',
+                    theme: metadata.theme || 'Unknown Theme',
+                    tags: metadata.tags || [],
+                    fileMimeType: mimeType, // Store the file type
+                    timestamp: serverTimestamp(),
+                    userId: userId
+                };
+
+                const colRef = getAssetsCollectionRef();
+                if (!colRef) throw new Error("Authentication not complete. Cannot save.");
+
+                await addDoc(colRef, newAsset);
+                
+                showStatus(`Successfully uploaded and tagged: ${newAsset.objectName}`);
+                fileInput.value = ''; // Clear file input
+                
+            } catch (error) {
+                console.error("Asset upload process failed:", error);
+                showMessageModal("Upload Failed", error.message);
+            } finally {
+                uploadBtn.disabled = true;
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        };
+
+        // Read file as Data URL (base64)
+        reader.onerror = () => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            showMessageModal("File Read Error", "Could not read the selected file.");
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // --- Search and Filtering ---
+
+    window.handleSearch = function() {
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        
+        if (!query) {
+            renderAssets(allAssets); // Show all if query is empty
+            return;
+        }
+
+        const filteredAssets = allAssets.filter(asset => {
+            // Check object name
+            if (asset.objectName && asset.objectName.toLowerCase().includes(query)) return true;
+            // Check theme
+            if (asset.theme && asset.theme.toLowerCase().includes(query)) return true;
+            // Check tags
+            if (asset.tags && Array.isArray(asset.tags) && asset.tags.some(tag => tag.toLowerCase().includes(query))) return true;
+            
+            return false;
+        });
+
+        renderAssets(filteredAssets);
+    };
+    
+    // Clicking on a tag updates the search box
+    window.searchByTag = function(tag) {
+        document.getElementById('search-input').value = tag;
+        handleSearch();
+    };
+
+    // --- Rendering ---
+
+    function renderAssets(assets) {
+        const grid = document.getElementById('asset-grid');
+        const noResults = document.getElementById('no-results');
+        grid.innerHTML = ''; // Clear existing content
+
+        if (assets.length === 0) {
+            noResults.classList.remove('hidden');
+            return;
+        }
+
+        noResults.classList.add('hidden');
+        
+        assets.forEach(asset => {
+            const assetCard = document.createElement('div');
+            assetCard.className = 'card bg-white p-4 rounded-xl shadow-md flex flex-col justify-between';
+            
+            // Generate tags HTML
+            const tagsHtml = (asset.tags || [])
+                .map(tag => `<span onclick="searchByTag('${tag.toLowerCase()}')" class="tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium m-1">#${tag}</span>`)
+                .join('');
+            
+            // Create a downloadable link for the image
+            const downloadLink = asset.base64Image;
+
+            // Determine file extension for download attribute
+            const fileExt = asset.fileMimeType && asset.fileMimeType.includes('png') ? 'png' : 'svg';
+            const fileName = `${asset.objectName.replace(/\s+/g, '_')}_${asset.id}.${fileExt}`;
+
+            // Image Preview Source Logic (Fixing potential data URI issue)
+            let imageSrc = asset.base64Image;
+            if (imageSrc && !imageSrc.startsWith('data:')) {
+                // If the data URI prefix is missing from Firestore, reconstruct it.
+                // We rely on fileMimeType, defaulting to SVG if unknown.
+                const fallbackMime = asset.fileMimeType || 'image/svg+xml';
+                imageSrc = `data:${fallbackMime};base64,${imageSrc}`;
+            }
+
+            assetCard.innerHTML = `
+                <div class="flex flex-col">
+                    <!-- Image Preview (using Base64 as src) --><div class="p-4 bg-gray-50 rounded-lg mb-4 h-40 flex items-center justify-center overflow-hidden">
+                        <!-- Added onerror to show a placeholder if image fails to render --><img src="${imageSrc}" onerror="this.src='https://placehold.co/100x40/f87171/ffffff?text=Load+Error';" alt="${asset.objectName}" class="max-w-full max-h-full object-contain" />
+                    </div>
+
+                    <h3 class="text-lg font-bold text-gray-900 truncate" title="${asset.objectName}">
+                        ${asset.objectName}
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-3">Theme: <span class="font-semibold text-[#007bff]">${asset.theme}</span></p>
+
+                    <!-- Tags --><div class="flex flex-wrap border-t border-gray-100 pt-3 mb-4">
+                        ${tagsHtml}
+                    </div>
+                </div>
+
+                <!-- Actions --><div class="flex space-x-2">
+                    <a href="${downloadLink}" download="${fileName}"
+                       class="flex-grow text-center button-primary">
+                        Download
+                    </a>
+                    <button onclick="deleteAsset('${asset.id}')" 
+                            class="bg-red-600 text-white p-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200 w-1/4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            grid.appendChild(assetCard);
+        });
+    }
+    
+    // Function to open the confirmation modal (Replaced confirm())
+    window.deleteAsset = function(assetId) {
+        assetIdToDelete = assetId; // Store ID globally
+        document.getElementById('confirmation-modal').classList.remove('hidden');
+    };
+
+    // Function to perform deletion after confirmation
+    async function performDelete(assetId) {
+        if (!assetId) return;
+        try {
+            const colRef = getAssetsCollectionRef();
+            if (!colRef) throw new Error("Authentication not complete. Cannot delete.");
+
+            await deleteDoc(doc(db, colRef.path, assetId));
+            showStatus('Asset deleted successfully.');
+        } catch (error) {
+            console.error("Error deleting asset:", error);
+            showMessageModal("Deletion Failed", "Could not delete the asset. Check console for details.");
+        } finally {
+            assetIdToDelete = null;
+        }
+    }
+
+
+    // --- TTS Helper Functions (Required boilerplate, though unused) ---
+    function base64ToArrayBuffer(base64) {
+        const binaryString = atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    function pcmToWav(pcmData, sampleRate) {
+        const numChannels = 1;
+        const bitsPerSample = 16;
+        const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+        const blockAlign = numChannels * (bitsPerSample / 8);
+        const dataSize = pcmData.length * (bitsPerSample / 8);
+        const buffer = new ArrayBuffer(44 + dataSize);
+        const view = new DataView(buffer);
+        let offset = 0;
+
+        // Write RIFF header
+        function writeString(str) {
+            for (let i = 0; i < str.length; i++) {
+                view.setUint8(offset++, str.charCodeAt(i));
+            }
+        }
+
+        // RIFF chunk descriptor
+        writeString('RIFF');
+        view.setUint32(offset, 36 + dataSize, true); offset += 4;
+        writeString('WAVE');
+        // FMT sub-chunk
+        writeString('fmt ');
+        view.setUint32(offset, 16, true); offset += 4; // Sub-chunk size
+        view.setUint16(offset, 1, true); offset += 2;  // Audio format (1=PCM)
+        view.setUint16(offset, numChannels, true); offset += 2;
+        view.setUint32(offset, sampleRate, true); offset += 4;
+        view.setUint32(offset, byteRate, true); offset += 4;
+        view.setUint16(offset, blockAlign, true); offset += 2;
+        view.setUint16(offset, bitsPerSample, true); offset += 2;
+        // Data sub-chunk
+        writeString('data');
+        view.setUint32(offset, dataSize, true); offset += 4;
+
+        // Write PCM data
+        for (let i = 0; i < pcmData.length; i++) {
+            view.setInt16(offset, pcmData[i], true);
+            offset += 2;
+        }
+
+        return new Blob([view], { type: 'audio/wav' });
+    }
+</script>
+
+</body>
+</html>
